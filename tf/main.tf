@@ -26,27 +26,18 @@ variable "cluster_cert" {
 // List of environments to be created
 variable "environments" {
   description = "List of environments"
-  default = [ "dev", "staging"]
+  default = [ "dev", "staging", "production"]
 }
 
-// Map of environment to NodePort
-variable "env_nodeport" {
-  description = "NodePort map for each environment"
+// Map of environment to image
+variable "env_image" {
+  description = "image map for each environment"
   default = { 
-    "dev" = 30201
-    "staging" = 30202
+    "dev" = "nginx:latest"
+    "staging" = "nginx:1.25-alpine-slim"
+    "production" = "nginx:1.24-alpine-slim"
   }
 }
-
-// Map of environment to Label
-variable "env_applabel" {
-  description = "Label map for each environment"
-  default = { 
-    "dev" = "DevNginx"
-    "staging" = "StagingNginx"
-  }
-}
-
 
 provider "kubernetes" {
   host = var.host
@@ -56,19 +47,20 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(var.cluster_cert)
 }
 
-resource "kubernetes_namespace" "dev_namespace" {
+resource "kubernetes_namespace" "namespace" {
+  for_each = toset(var.environments)
   metadata {
-    name = "dev"
+    name = "${each.key}"
   }
 }
 
 resource "kubernetes_deployment" "deployment" {
   for_each = toset(var.environments)
   metadata {
-    name      = "${each.key}-nginx"
-    namespace = "dev"
+    name      = "nginx"
+    namespace = "${each.key}"
     labels = {
-      App = var.env_applabel[each.key]
+      App = "Nginx"
     }
   }
 
@@ -76,18 +68,18 @@ resource "kubernetes_deployment" "deployment" {
     replicas = 2
     selector {
       match_labels = {
-        App = var.env_applabel[each.key]
+        App = "Nginx"
       }
     }
     template {
       metadata {
         labels = {
-          App = var.env_applabel[each.key]
+          App = "Nginx"
         }
       }
       spec {
         container {
-          image = "nginx"
+          image = var.env_image[each.key]
           name  = "${each.key}"
 
           port {
@@ -113,19 +105,18 @@ resource "kubernetes_deployment" "deployment" {
 resource "kubernetes_service" "svc" {
   for_each = toset(var.environments)
   metadata {
-    name      = "${each.key}-nginx"
-    namespace = "dev"
+    name      = "nginx"
+    namespace = "${each.key}"
   }
   spec {
     selector = {
-      App = var.env_applabel[each.key]
+      App = "Nginx"
     }
     port {
-      node_port   = var.env_nodeport[each.key]
       port        = 80
       target_port = 80
     }
 
-    type = "NodePort"
+    type = "ClusterIP"
   }
 }
