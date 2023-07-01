@@ -43,7 +43,7 @@ variable "env_applabel" {
   description = "Label map for each environment"
   default = { 
     "dev" = "DevNginx"
-    "staging" = "StagingNginxzzzzz"
+    "staging" = "StagingNginx"
   }
 }
 
