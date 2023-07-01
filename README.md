@@ -47,3 +47,27 @@ There are a few limitiations with this approach:
 Or add ingress controller and implement as clusterip service
 
 
+# Task 002 - add-production-environment
+
+    git checkout 02-add-production-environment
+
+I'm going to fix some of the issues with the solution outlined in 01-simplify-adding-environments branch. Firstly adding another production to the environment. Next I'm moving each environment to it's own namespace, introducing generically named objects and ClusterIP services in preference to NodePorts. 
+
+I've also introduced a map for the the lookup of different image/tags per environment.
+
+Although neater still requires the type of resources to be created together rather than each environment created independently. 
+
+## Tesing via Port Forwarding
+
+As we no longer have nodeports we can access the ClusterIP services via port-forwarding
+
+    kubectl port-forward svc/nginx -n production 8000:80
+    curl http://localhost:8000/
+
+    kubectl port-forward svc/nginx -n staging 8000:80
+    curl http://localhost:8000/
+
+    kubectl port-forward svc/nginx -n dev 8000:80
+    curl http://localhost:8000/
+
+
