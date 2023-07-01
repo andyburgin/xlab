@@ -23,6 +23,31 @@ variable "cluster_cert" {
   type = string
 }
 
+// List of environments to be created
+variable "environments" {
+  description = "List of environments"
+  default = [ "dev", "staging"]
+}
+
+// Map of environment to NodePort
+variable "env_nodeport" {
+  description = "NodePort map for each environment"
+  default = { 
+    "dev" = 30201
+    "staging" = 30202
+  }
+}
+
+// Map of environment to Label
+variable "env_applabel" {
+  description = "Label map for each environment"
+  default = { 
+    "dev" = "DevNginx"
+    "staging" = "StagingNginxzzzzz"
+  }
+}
+
+
 provider "kubernetes" {
   host = var.host
 
@@ -37,12 +62,13 @@ resource "kubernetes_namespace" "dev_namespace" {
   }
 }
 
-resource "kubernetes_deployment" "dev_nginx" {
+resource "kubernetes_deployment" "deployment" {
+  for_each = toset(var.environments)
   metadata {
-    name      = "dev-nginx"
+    name      = "${each.key}-nginx"
     namespace = "dev"
     labels = {
-      App = "DevNginx"
+      App = var.env_applabel[each.key]
     }
   }
 
@@ -50,19 +76,19 @@ resource "kubernetes_deployment" "dev_nginx" {
     replicas = 2
     selector {
       match_labels = {
-        App = "DevNginx"
+        App = var.env_applabel[each.key]
       }
     }
     template {
       metadata {
         labels = {
-          App = "DevNginx"
+          App = var.env_applabel[each.key]
         }
       }
       spec {
         container {
           image = "nginx"
-          name  = "dev"
+          name  = "${each.key}"
 
           port {
             container_port = 80
@@ -84,83 +110,18 @@ resource "kubernetes_deployment" "dev_nginx" {
   }
 }
 
-resource "kubernetes_service" "dev_nginx" {
+resource "kubernetes_service" "svc" {
+  for_each = toset(var.environments)
   metadata {
-    name      = "dev-nginx"
+    name      = "${each.key}-nginx"
     namespace = "dev"
   }
   spec {
     selector = {
-      App = kubernetes_deployment.dev_nginx.spec.0.template.0.metadata[0].labels.App
+      App = var.env_applabel[each.key]
     }
     port {
-      node_port   = 30201
-      port        = 80
-      target_port = 80
-    }
-
-    type = "NodePort"
-  }
-}
-
-resource "kubernetes_deployment" "stg_nginx" {
-  metadata {
-    name      = "staging-nginx"
-    namespace = "dev"
-    labels = {
-      App = "StagingNginx"
-    }
-  }
-
-  spec {
-    replicas = 2
-    selector {
-      match_labels = {
-        App = "StagingNginx"
-      }
-    }
-    template {
-      metadata {
-        labels = {
-          App = "StagingNginx"
-        }
-      }
-      spec {
-        container {
-          image = "nginx"
-          name  = "staging"
-
-          port {
-            container_port = 80
-          }
-
-          resources {
-            limits = {
-              cpu    = "0.5"
-              memory = "512Mi"
-            }
-            requests = {
-              cpu    = "250m"
-              memory = "50Mi"
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-resource "kubernetes_service" "stg_nginx" {
-  metadata {
-    name      = "staging-nginx"
-    namespace = "dev"
-  }
-  spec {
-    selector = {
-      App = kubernetes_deployment.stg_nginx.spec.0.template.0.metadata[0].labels.App
-    }
-    port {
-      node_port   = 30202
+      node_port   = var.env_nodeport[each.key]
       port        = 80
       target_port = 80
     }
