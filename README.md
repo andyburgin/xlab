@@ -47,7 +47,7 @@ There are a few limitiations with this approach:
 Or add ingress controller and implement as clusterip service
 
 
-# Task 002 - add-production-environment
+# Task 02 - add-production-environment
 
     git checkout 02-add-production-environment
 
@@ -70,4 +70,7 @@ As we no longer have nodeports we can access the ClusterIP services via port-for
     kubectl port-forward svc/nginx -n dev 8000:80
     curl http://localhost:8000/
 
+# Task 03 - module-environment-refactor
+
+Added module for kubernetes application in modules folder, remember to run terraform init to pull in module dependency.
 
