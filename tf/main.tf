@@ -25,18 +25,17 @@ variable "cluster_cert" {
 
 // List of environments to be created
 variable "environments" {
-  description = "List of environments"
-  default = [ "dev", "staging", "production"]
-}
-
-// Map of environment to image
-variable "env_image" {
-  description = "image map for each environment"
-  default = { 
-    "dev" = "nginx:latest"
-    "staging" = "nginx:1.25-alpine-slim"
-    "production" = "nginx:1.24-alpine-slim"
-  }
+  description = "List of environments and images"
+  default = [{ 
+    "name" = "dev"
+    "image" = "nginx:latest"
+  },{ 
+    "name" = "staging"
+    "image" = "nginx:1.25-alpine-slim"
+  },{ 
+    "name" = "production"
+    "image" = "nginx:1.24-alpine-slim"
+  }]
 }
 
 provider "kubernetes" {
@@ -49,9 +48,8 @@ provider "kubernetes" {
 
 module "kubernetes_application" {
   source = "./modules/kubernetes_application"
-  for_each = toset(var.environments)
-  namespace = "${each.key}"
-  image = var.env_image[each.key]
+  for_each = { for index, env in var.environments: env.name => env }
+
+  namespace = each.value.name
+  image = each.value.image
 }
-
-
