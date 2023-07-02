@@ -74,3 +74,15 @@ As we no longer have nodeports we can access the ClusterIP services via port-for
 
 Added module for kubernetes application in modules folder, remember to run terraform init to pull in module dependency.
 
+Separated the varables into seperate file and consolidated all environment specific varables in to a combined per environment map.
+
+    [{ 
+        "name" = "dev"
+        "image" = "nginx:latest"
+    },{ 
+        "name" = "staging"
+        "image" = "nginx:1.25-alpine-slim"
+    },{ 
+        "name" = "production"
+        "image" = "nginx:1.24-alpine-slim"
+    }]
