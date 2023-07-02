@@ -86,3 +86,11 @@ Separated the varables into seperate file and consolidated all environment speci
         "name" = "production"
         "image" = "nginx:1.24-alpine-slim"
     }]
+
+# Task 04 - separate-environment-vars
+
+I've seperated the enmvironment variables into individual files, this enables teams to update and PR new environments as required, creating potential for gitops style CI/CD deployment. A better solution would be to have seperate Kubernetes clusters per environment thus removing dependencies on a single repo and creating the oportunity for separate environmental deployment and management.
+
+For CI/CD pipelines I'd reccomend a paramterised build alowinf the selection of target environment. The pipeline schould be brokeninto the separate steps of init -> validate -> plan -> apply -> test e.g by Jenkinsfile. I would also propose container image scanning pre deployment via tools such as Snyk. 
+
+There's no automated testing added to the repo but through the use of a toos like terratest it would be possible to define unit/integration/end2end test, however to accomplish that level of coverage a significant effort is require. A  risk based approach to deciding what level of testing is appropriate to this solution should be used.
