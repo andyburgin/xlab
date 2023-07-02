@@ -14,10 +14,20 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(var.cluster_cert)
 }
 
-module "kubernetes_application" {
+module "dev_kubernetes_application" {
   source = "./modules/kubernetes_application"
-  for_each = { for index, env in var.environments: env.name => env }
+  namespace = var.dev_env.name
+  image = var.dev_env.image
+}
 
-  namespace = each.value.name
-  image = each.value.image
+module "staging_kubernetes_application" {
+  source = "./modules/kubernetes_application"
+  namespace = var.staging_env.name
+  image = var.staging_env.image
+}
+
+module "production_kubernetes_application" {
+  source = "./modules/kubernetes_application"
+  namespace = var.production_env.name
+  image = var.production_env.image
 }
